@@ -6,7 +6,6 @@ import lsst.afw.image                   as afwImage
 import lsst.meas.astrom                 as measAstrom
 import lsst.afw.geom                    as afwGeom
 import lsst.afw.cameraGeom              as cameraGeom
-import lsst.meas.algorithms             as measAlg
 
 # we need these for meas_extensions
 # ... they are never explicitly used
@@ -723,13 +722,11 @@ class ButlerQaData(QaData):
                 #  keyword in the calexp_md.  So a fwhm=-1 here, doesn't mean
                 #  it wasn't already set by SEEING
                 sigmaToFwhm = 2.0*math.sqrt(2.0*math.log(2.0))
-                width = calexp_md.get('NAXIS1')
-                height = calexp_md.get('NAXIS2')
                 try:
                     psf = self.outButler.get("psf", visit=dataId['visit'],
                                              raft=dataId['raft'], sensor=dataId['sensor'])
-                    attr = measAlg.PsfAttributes(psf, width // 2, height // 2)
-                    fwhm = attr.computeGaussianWidth() * self.wcsCache[dataKey].pixelScale().asArcseconds() * sigmaToFwhm
+                    fwhm = (psf.computeShape().getDeterminantRadius() *
+                            self.wcsCache[dataKey].pixelScale().asArcseconds() * sigmaToFwhm)
                 except Exception, e:
                     fwhm = -1.0
 
